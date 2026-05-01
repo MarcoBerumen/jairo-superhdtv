@@ -1,0 +1,161 @@
+
+{var $columns = $columnsData[0]}
+{var $columnsData = array_slice($columnsData, 1)}
+
+{var $grouped = count($groupByData)}
+
+{var $groupBy = $groupByData[0]}
+{var $groupByData = array_slice($groupByData, 1)}
+
+{if $grouped > 0}
+{var $groups = group_by($data, $groupBy)}
+{/if}
+
+{* {json_encode($groups)} *}
+{if $children != 1}
+
+<a href="javascript:Print('#lattereport')" class="float btn btn-primary">
+<i class="fa fa-print fa-lg lg my-float"></i>
+</a>
+<script>
+
+function Print(selectors) {
+  const printFrame = document.createElement("iframe");
+  printFrame.setAttribute("style", "visibility:hidden;position:absolute;top:0;");
+  document.body.appendChild(printFrame);
+  printFrame.contentDocument.body.appendChild(document.querySelector(selectors).cloneNode(true));
+  [].forEach.call(document.querySelectorAll("style"), (style) => {
+    printFrame.contentDocument.head.appendChild(style.cloneNode(true));
+  });
+  printFrame.contentWindow.print();
+  printFrame.parentNode.removeChild(printFrame);
+}
+
+
+</script>
+{/if}
+
+<style type="text/css">
+.float{
+	position:fixed;
+	width:60px;
+	height:60px;
+	bottom:40px;
+	right:40px;
+	color:#FFF;
+	border-radius:50px;
+	text-align:center;
+	box-shadow: 2px 2px 3px #999;
+}
+
+.my-float{
+	margin-top:22px;
+}
+
+.report-body:nth-child(even){
+  background-color:#F0F8FF;
+}
+.report-body:hover{
+  background-color:#FFFFE6;
+  cursor:pointer;
+}
+.report-header,
+.report-body,
+.report-footer {
+  display: flex;
+  padding: 0 5px;
+}
+.report-header div,
+.report-header .mat-icon,
+.report-body div,
+.report-body .mat-icon,
+.report-footer div,
+.report-footer .mat-icon {
+  flex: 1;
+  word-break: break-all;
+  padding: 0 5px;
+  font-size: 9px;
+}
+@media screen {
+  .report-header div,
+.report-header .mat-icon,
+.report-body div,
+.report-body .mat-icon,
+.report-footer div,
+.report-footer .mat-icon {
+    font-size: .75em;
+  }
+}
+
+.report-header,
+.report-footer {
+  font-weight: bold;
+}
+
+.report-header {
+  border-bottom: 1px solid black;
+  margin-top: 5px;
+}
+
+.report-body .report-body-line {
+  border-bottom: 1px solid black;
+}
+
+.report-footer {
+  margin-bottom: 10px;
+}
+.report-footer .report-footer-border {
+  border-top: 1px solid black;
+}
+
+.report-nested {
+  padding-left: 20px;
+}
+</style>
+{if $children == ""}
+<div id="lattereport">
+{/if}
+<div  n:if="$grouped == 0" >
+  <div class="report-header">
+    <div n:foreach="$columns as $column" style="text-align: {$column['align']}; flex-grow: {$column['proportion'] ?? 1}">
+      {$column['label']|noescape}
+    </div>  
+  </div>
+  <div n:foreach="$data as $row" class="report-body">
+    <div n:foreach="$columns as $column" style="text-align:{$column['align']}; flex-grow:{$column['proportion']  ?? 1}" class="{$column['line'] ? report-body-line}">
+      {custom_format($row[$column['key']], $column['type'])|noescape}
+    </div>
+  </div>
+</div>
+
+<div n:if="$grouped > 0">
+  <div n:foreach="$groups as $group">
+    <div n:if="$grouped > 0 || $iterator['first']" class="report-header">
+      <div n:foreach="$columns as $column" style="text-align:{$column['align']}; flex-grow:{$column['proportion'] ?? 1}">
+         {$column['label']|noescape}
+      </div>
+    </div>
+    <div class="report-body">
+
+      <div n:foreach="$columns as $column" style="text-align:{$column['align']}; flex-grow:{$column['proportion'] ?? 1}" class="{$column['line'] ? report-body-line}">
+
+        {custom_format($column['totalKey']??0 ? sum($group, $column['key']) : $group[0][$column['key']], $column['type'])|noescape}
+      </div>
+    </div>
+    <div n:if="$grouped > 0" class="report-nested">
+      {$latte->renderToString('../app/templates/report.latte', [children=>1,columnsData=>$columnsData, groupByData=>$groupByData, data=>$group, latte=>$latte])|noescape}
+    </div>
+  </div>
+</div>
+
+<div class="report-footer">
+  <div n:foreach="$columns as $column" style="text-align:{$column['align']}; flex-grow:{$column['proportion'] ?? 1}" class="{$column['total']??0 ? report-footer-border}">
+
+    {$column['total']??0 ? custom_format(sum($data, $column['key']), $column['type']) : $column['totalText']??''}
+  
+  </div>
+</div>
+{if $children == ""}
+</div>
+{/if}
+

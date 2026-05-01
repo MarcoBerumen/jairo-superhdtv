@@ -1,0 +1,6 @@
+const.php
+vendor/
+log/
+public/assets/
+public/assets2/
+.env

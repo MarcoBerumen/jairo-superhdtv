@@ -1,0 +1,266 @@
+	<form id="fileupload" action="{$action}" method="POST" enctype="multipart/form-data">
+		<!-- begin panel -->
+		<div class="panel panel-inverse">
+			<!-- begin panel-heading -->
+			<div class="panel-heading">
+				<h4 class="panel-title">Ver archivos en : {$module}</h4>
+				<div class="panel-heading-btn">
+					<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+					<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success" data-click="panel-reload"><i class="fa fa-redo"></i></a>
+					<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+					<a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+				</div>
+			</div>
+			<!-- end panel-heading -->
+			<!-- begin panel-body -->
+		
+			<!-- end panel-body -->
+			<!-- begin table -->
+			<div class="table-responsive">
+				<table class="table table-striped table-condensed text-nowrap mb-0">
+					<thead>
+						<tr>
+							<th>Archivo</th>
+							<th>Fecha</th>
+							<th>Usuario</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody class="files">
+					</tbody>
+				</table>
+			</div>
+			<!-- end table -->
+		</div>
+		<!-- end panel -->
+	</form>
+
+<script>
+var files = {$files|noescape};
+console.log(files);
+</script>
+<script n:syntax="off">
+
+
+var handleJqueryFileUpload = function() {
+$.widget('blueimp.fileupload', $.blueimp.fileupload, {
+options: {
+messages: {
+	maxNumberOfFiles: 'Maximum number of files exceeded',
+	acceptFileTypes: 'Tipo de archivo no permitido',
+	maxFileSize: 'File is too large',
+	minFileSize: 'File is too small'
+}
+}
+});
+// Initialize the jQuery File Upload widget:
+var $form =$('#fileupload').fileupload({
+autoUpload: false,
+disableImageResize: /Android(?!.*Chrome)|Opera/.test(window.navigator.userAgent),
+maxFileSize: 5000000,
+acceptFileTypes: /(\.|\/)(gif|jpe?g|png|pdf|doc|docx|xlsx|xls|zip)$/i,
+// Uncomment the following to send cross-domain cookies:
+//xhrFields: {withCCOLOR_REDentials: true},                
+});
+$form.fileupload('option', 'done').call($form, $.Event('done'), {result: {files: files}});
+
+// Enable iframe cross-domain access via COLOR_REDirect option:
+$('#fileupload').fileupload(
+'option',
+'COLOR_REDirect',
+window.location.href.replace(
+	/\/[^\/]*$/,
+	'/cors/result.html?%s'
+)
+);
+
+// hide empty row text
+$('#fileupload').bind('fileuploadadd', function(e, data) {
+$('#fileupload [data-id="empty"]').hide();
+});
+
+// show empty row text
+$('#fileupload').bind('fileuploadfail', function(e, data) {
+var rowLeft = (data['originalFiles']) ? data['originalFiles'].length : 0;
+if (rowLeft === 0) {
+	$('#fileupload [data-id="empty"]').show();
+} else {
+	$('#fileupload [data-id="empty"]').hide();
+}
+});
+
+// Upload server status check for browsers with CORS support:
+if ($.support.cors) {
+$.ajax({
+	type: 'HEAD'
+}).fail(function() {
+	$('<div class="alert alert-danger"/>').text('No se puede cargar archivos - ' +
+		new Date()).appendTo('#fileupload');
+});
+}
+
+// Load & display existing files:
+$('#fileupload').addClass('fileupload-processing');
+$.ajax({
+// Uncomment the following to send cross-domain cookies:
+//xhrFields: {withCCOLOR_REDentials: true},
+url: $('#fileupload').fileupload('option', 'url'),
+dataType: 'json',
+context: $('#fileupload')[0]
+}).always(function() {
+$(this).removeClass('fileupload-processing');
+}).done(function(result) {
+$(this).fileupload('option', 'done')
+	.call(this, $.Event('done'), {
+		result: result
+	})
+});
+};
+
+
+var FormMultipleUpload = function() {
+"use strict";
+return {
+//main function
+init: function() {
+	handleJqueryFileUpload();
+}
+};
+}();
+</script>
+
+<script id="template-upload" type="text/x-tmpl" n:syntax="off">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+<tr class="template-upload fade show">
+
+	<td>
+		<div class="bg-light rounded p-10 mb-2">
+			<dl class="m-b-0">
+				<dt class="text-inverse">Archivo:</dt>
+				<dd class="name">{%=file.name%}</dd>
+				<dt class="text-inverse m-t-10">Tamaño:</dt>
+				<dd class="size">Procesando...</dd>
+			</dl>
+		</div>
+		<strong class="error text-danger h-auto d-block text-left"></strong>
+	</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+
+	<td>
+		<dl>
+			<dt class="text-inverse m-t-3">Cargando:</dt>
+			<dd class="m-t-5">
+				<div class="progress progress-sm progress-striped active rounded-corner"><div class="progress-bar progress-bar-primary" style="width:0%; min-width: 40px;">0%</div></div>
+			</dd>
+		</dl>
+	</td>
+	<td nowrap>
+		{% if (!i && !o.options.autoUpload) { %}
+			<button class="btn btn-primary start width-100 p-r-20 m-r-3" disabled>
+				<i class="fa fa-upload fa-fw text-inverse"></i>
+				<span>Comenzar</span>
+			</button>
+		{% } %}
+		{% if (!i) { %}
+
+		{% } %}
+	</td>
+</tr>
+{% } %}
+</script>
+
+<!-- The template to display files available for download -->
+<script id="template-download" type="text/x-tmpl" n:syntax="off">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+	<tr class="template-download fade show">
+		<td>
+			<div class="bg-light p-10 mb-2">
+				<dl class="m-b-0">
+					<dt class="text-inverse">Nombre:</dt>
+					<dd class="name">
+						{% if (file.url) { %}
+							<a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?'data-gallery':''%}>{%=file.name%}</a>
+						{% } else { %}
+							<span>{%=file.name%}</span>
+						{% } %}
+					</dd>
+					<dt class="text-inverse m-t-10">File Size:</dt>
+					<dd class="size">{%=file.size%} KB</dd>
+				</dl>
+				{% if (file.error) { %}
+					<div><span class="label label-danger">ERROR</span> {%=file.error%}</div>
+				{% } %}
+			</div>
+		</td>
+		<td>{%=file.date%}</td>
+		<td>{%=file.user%}</td>
+		<td></td>
+		<td>
+			{% if (file.deleteUrl) { %}
+				<input type="checkbox" name="delete" value="1" class="toggle">
+			{% } else { %}
+
+				
+			{% } %}
+		</td>
+	</tr>
+{% } %}
+</script>
+<script n:syntax="off">
+var handleDataTableDefault = function() {
+$('.delete').click(function( event ) {
+  event.preventDefault();
+if(confirm('Estas seguro de eliminar este archivo?'))
+{
+	  return true;
+}
+else
+{
+	return false;
+}
+});
+
+
+"use strict";
+
+if ($('#archivostable').length !== 0) {
+$('#archivostable').DataTable({
+	responsive: true,
+	processing: true,
+	serverSide: true,
+	"order": [
+		[1, "asc"]
+	],
+
+	ajax: '/api/crm/clientes/<?php echo $id;?>/archivos',
+	"columnDefs": [{
+		"targets": -1,
+		"data": null,
+		"render": function(data, type, full, meta) {
+			return `
+					<div class="btn-group m-r-5 m-b-5">
+
+									<a href="#" data-toggle="dropdown" class="btn btn-default dropdown-toggle"><b class="caret"></b></a>
+									<div class="dropdown-menu dropdown-menu-right">
+										<a href="/crm/clientes/` + data[0] + `" class="dropdown-item">Editar</a>
+									</div>
+								</div>
+					`
+		}
+	}],
+});
+}
+};
+
+var TableManageDefault = function() {
+
+"use strict";
+return {
+//main function
+init: function() {
+	handleDataTableDefault();
+}
+};
+}();
+</script>

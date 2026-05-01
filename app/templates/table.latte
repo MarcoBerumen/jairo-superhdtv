@@ -1,0 +1,24 @@
+
+<div class="col-12">
+<table id="{$name}table" class="table table-striped table-bordered table-td-valign-middle">
+    <thead>
+        <tr>
+            {foreach $rows as $item}
+            <th {$item['attrs']??""}>{$item['text']}</th>
+            {/foreach}
+        </tr>
+    </thead>
+    <tfoot>
+        {foreach $data as $row}
+        <tr>
+            {foreach $rows as $item}
+            <th {$item['attrs']??""}>{$item['text']}</th>
+            {/foreach}
+        </tr>
+        {/foreach}
+    </tfoot>
+    <tbody>
+    
+    </tbody>
+</table>
+</div>

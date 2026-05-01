@@ -1,0 +1,333 @@
+<!--  Begin table  -->
+				<table class="table table-striped table-condensed text-nowrap mb-0"  id="{$name|noescape}table" style="width:100%">
+
+<thead>
+    <tr>
+        <th>
+        </th>
+        <th v-for="header in headers" v-if="header == 'Concepto' || header == 'Precio' || header == 'Subtotal' || header == 'Cantidad'"    v-bind:style=" header != 'Concepto' ? 'text-align:right;' : 'text-align:left;;' ">
+        {{ header }}
+        </th>
+    </tr>
+
+</thead>
+<tbody>
+    <tr v-for="(item,index) in items">
+        <td >
+        <button class="btn btn-primary"  v-on:click="deleteItem(index)"  ><i class="fa fa-trash"></i></button>
+        <button class="btn btn-primary" v-on:click="fireEdit(index)"><i class="fa fa-edit"></i></button>
+               {if $links??"" != ""}
+                       <button class="btn btn-primary" v-on:click="fireLink(index,'{$links}')"><i class="fa fa-eye"></i></button>
+                 {/if}
+                  {if $linksid??"" != ""}
+                       <button v-if="item['id']?.value > 0" class="btn btn-primary" v-on:click="fireLink(index,'{$linksid}',0)"><i class="fa fa-cog"></i></button>
+                 {/if}
+
+        <td>
+        <td v-for="key in keys" v-if="key == 'concepto' || key == 'precio' || key == 'subtotal'  || key == 'cantidad'"  v-bind:style=" key != 'concepto' ? 'text-align:right;' : 'text-align:left;;' "> 
+        * {{ item[key]?.label }}
+        </td>
+    </tr>
+
+</tbody>
+<tfoot>
+<tr>
+        <td colspan="4"  class="text-right">
+          Subtotal: 
+        </td>
+        <td  class="text-right">
+        {{ subtotal }}
+        </td>
+  </tr>
+<tr>
+        <td colspan="4"  class="text-right">
+          Traslado
+        </td>
+        <td  class="text-right">
+        {{ traslados }}
+        </td>
+  </tr>
+<tr>
+        <td colspan="4"  class="text-right">
+          Retenciones: 
+        </td>
+        <td  class="text-right">
+        {{ retenciones }}
+        </td>
+  </tr>
+<tr>
+        <td colspan="4"  class="text-right">
+          Imp. Locales: 
+        </td>
+        <td  class="text-right">
+        {{ locales }}
+        </td>
+  </tr>
+<tr>
+        <td colspan="4"  class="text-right">
+          Total: 
+        </td>
+        <td  class="text-right">
+        {{ totalconceptos }}
+        </td>
+  </tr>
+</tfoot>
+</table>
+
+
+<button class="btn btn-primary" onclick="{$name|noescape}object.fireNew();" ><i class="fa fa-plus"></i></button>
+<!--  End table  -->
+<!--  Begin Modal -->
+<div class="modal fade" id="{$name}modal" tabindex="-1" role="dialog" aria-labelledby="{$name}modalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{$name}modalLabel"> {$addTitle}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {include 'form.latte'}
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-success" onclick="{$name|noescape}object.fireAdd();">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!--  End Modal -->
+
+
+
+{* {include 'table.latte', ["title" => $title, "rows" => $fields,"name"=> $name]} *}
+
+<script n:syntax="double">
+
+
+document.addEventListener("DOMContentLoaded", function(event) {
+$(document).ready(function(){
+// VALIDACION
+{{$name|noescape}}ValidationObject = $('#{{$name|noescape}}').parsley();
+
+// VUE COMPONENT
+{{$name|noescape}}object = new Vue({
+el: '#{{$name|noescape}}table',
+data: {
+  headers : [
+          {{foreach $fields as $row}}
+          "{{$row['label']|noescape}}",
+           {{/foreach}}
+      ],
+  keys : [
+
+          {{foreach $fields as $row}}
+          "{{$row['name']|noescape}}",
+           {{/foreach}}
+      ],
+items: [],
+            subtotal: 0,
+            traslados: 0,
+            retenciones: 0,
+            locales: 0,
+            totalconceptos: 0,
+
+
+},
+methods:
+{
+deleteItem: function (index) { 
+    this.items.splice(index, 1);
+    this.fireTotals();
+},
+
+fireEdit: function(index){
+  
+      $("#concepto").select2({
+            ajax: {
+                url:  "/api/sel2/conceptos" ,
+                dataType: 'json'
+            }
+        });
+
+
+    $('#concepto').on('change', function() {
+    window.cambioconcepto();
+});
+
+    $('#{{$name|noescape}}').trigger('reset');
+      $('#{{$name|noescape}}').attr('data-index',index);
+      this.keys.forEach(function(key){
+        if ($('#'+key).hasClass("select2-hidden-accessible"))
+        {
+         var newOption = new Option({{$name|noescape}}object.items[index][key].label, {{$name|noescape}}object.items[index][key].value, false, false);
+        $('#'+key).append(newOption).trigger('change');
+        }
+        else{
+                $('#'+key).val({{$name|noescape}}object.items[index][key].value);
+        }
+
+        $('#'+key).val({{$name|noescape}}object.items[index][key].value);
+      });
+      $('#{{$name|noescape}}modal').modal('show');
+      $('#{{$name|noescape}}').find('.select2-hidden-accessible').trigger("change");
+      this.fireTotals();
+}
+,
+ {{if $links??"" != ""}}
+fireLink: function(index,link,fl=1){
+  if(fl == 1){
+  window.open(link+'/'+this.items[index].{{$linksfield|noescape}}.value);
+  }
+  else
+  {
+  window.location.href=link+'/'+this.items[index].{{$linksfield|noescape}}.value;
+  }
+},
+{{/if}}
+fireTotals: function(){
+      var sum = 0;
+      var sums = 0;
+      var sumt = 0;
+      var sumr = 0;
+      var suml = 0;
+                    {{$name|noescape}}object.items.forEach(e => {
+                        sums += parseFloat(e.subtotal.value);
+                        sumt += parseFloat(e.traslados.value);
+                        sumr += parseFloat(e.retenciones.value);
+                        suml += parseFloat(e.locales.value);
+                        sum += parseFloat(e.total.value);
+                    });
+                    {{$name|noescape}}object.subtotal = sums;
+                    $('#doc_subtotal').val(sums);
+                    {{$name|noescape}}object.traslados = sums;
+                    $('#doc_traslados').val(sumt);
+                    {{$name|noescape}}object.retenciones = sums;
+                    $('#doc_retenciones').val(sumr);
+                    {{$name|noescape}}object.locales = sums;
+                    $('#doc_locales').val(suml);
+                    {{$name|noescape}}object.totalconceptos = sum;
+                    $('#doc_total').val(sum);
+
+},
+fireNew: function(){
+      $("#concepto").select2({
+            ajax: {
+                url:  "/api/sel2/conceptos" ,
+                dataType: 'json'
+            }
+        });
+
+
+    $('#concepto').on('change', function() {
+    window.cambioconcepto();
+});
+
+
+    $('#{{$name|noescape}}').removeAttr('data-index');
+    $('#{{$name|noescape}}').trigger('reset');
+    $('#{{$name|noescape}}').find('.select2-hidden-accessible').val(null).trigger("change");
+    $('#{{$name|noescape}}modal').modal('show');
+
+
+}
+,
+fireAdd: function(){
+
+    {{$name|noescape}}ValidationObject.validate();
+    if({{$name|noescape}}ValidationObject.isValid())
+    {
+      if( $('#{{$name|noescape}}').attr('data-index'))
+      {
+        
+        dato = this.items.slice();
+        dato.splice($('#{{$name|noescape}}').attr('dato-index'), 1);
+
+            if(this.items[$('#{{$name|noescape}}').attr('data-index')].hasOwnProperty('id'))
+            {
+              console.log(' si tiene id');
+              console.log(this.serialize());
+              dataobj = this.serialize();
+              dataobj.id=this.items[$('#{{$name|noescape}}').attr('data-index')].id;
+              console.log(dataobj);
+                    this.items.splice($('#{{$name|noescape}}').attr('data-index'), 1,dataobj);
+
+            }
+            else
+            {
+                          this.items.splice($('#{{$name|noescape}}').attr('data-index'), 1,this.serialize());
+
+            }
+            $('#{{$name|noescape}}').removeAttr('data-index');
+        // }
+      }
+      else
+      {
+        if(this.exists(this.items,this.serialize()))
+        {
+          alert('Error', 'Registro repetidox');
+          return false;
+        }
+        else
+        {
+        this.items.push(this.serialize());
+
+        }
+      }
+    $('#{{$name|noescape}}modal').modal('hide');
+    $('#{{$name|noescape}}').trigger('reset');
+    $('#{{$name|noescape}}').find('.select2-hidden-accessible').val(null).trigger("change");
+
+    }
+    this.fireTotals();
+
+                      $('#concepto').select2('destroy');
+                      $('#concepto').off('change');
+
+},
+ serialize1(object, keys) {
+  var x = keys.map(key => JSON.stringify(object[key])).join();
+  return x;
+},
+
+ exists(array, element, keys = []) {
+  if (!keys?.length) {
+    keys = Object.keys(element);
+  }
+  
+  return !!array.find(_element => this.serialize1(_element, keys) === this.serialize1(element, keys));
+}
+,
+serialize: function(){
+  var dataArray = $('#{{$name|noescape}}').serializeArray(),
+    dataObj = {};
+
+$(dataArray).each(function(i, field){
+
+       if($("#"+field.name).is('select')){
+           inputType = 'select';
+             label = $("#"+field.name+" :selected").text().trim();
+
+       }else if($("#"+field.name).is('input:checkbox')){
+           inputType = 'checkbox';
+             label = field.value;
+       }
+       else {
+           inputType = 'text';
+             label = field.value;
+
+       }
+   
+  dataObj[field.name] = {"label": label ,"type" : inputType ,"value" :field.value};
+})
+return dataObj;
+
+
+}
+}
+});
+});
+});
+</script>

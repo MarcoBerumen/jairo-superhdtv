@@ -1,0 +1,248 @@
+<!--  Begin table  -->
+<table class="table" id="{$name|noescape}table">
+
+<thead>
+    <tr>
+        <th v-for="header in headers">
+        {{ header }}
+        </th>
+        <th>
+        </th>
+    </tr>
+
+</thead>
+<tbody>
+    <tr v-for="(item,index) in items">
+        <td v-for="key in keys" v-if="key != 'id'">
+        {{ item[key]?.label }}
+        </td>
+        <td class="text-right">
+        <button class="btn btn-primary"  v-on:click="deleteItem(index)"  ><i class="fa fa-trash"></i></button>
+        <button class="btn btn-primary" v-on:click="fireEdit(index)"><i class="fa fa-edit"></i></button>
+               {if $links??"" != ""}
+                       <button class="btn btn-primary" v-on:click="fireLink(index,'{$links}')"><i class="fa fa-eye"></i></button>
+                 {/if}
+                  {if $linksid??"" != ""}
+                       <button v-if="item['id']?.value > 0" class="btn btn-primary" v-on:click="fireLink(index,'{$linksid}',0)"><i class="fa fa-cog"></i></button>
+                 {/if}
+
+        <th>
+    </tr>
+
+</tbody>
+<tfoot>
+    <tr>
+        <th v-for="header in headers">
+        {{ header }}
+        </th>
+        <th>
+        </th>
+    </tr>
+
+</tfoot>
+</table>
+
+
+<button class="btn btn-primary" onclick='{($name.'object.fireNew();')|noescape}' ><i class="fa fa-plus"></i></button>
+<!--  End table  -->
+<!--  Begin Modal -->
+<div class="modal fade" id="{$name}modal" tabindex="-1" role="dialog" aria-labelledby="{$name}modalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{$name}modalLabel"> {$addTitle}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {include 'form.latte'}
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" onclick="{$name|noescape}object.fireAdd();">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!--  End Modal -->
+
+
+
+{* {include 'table.latte', ["title" => $title, "rows" => $fields,"name"=> $name]} *}
+
+<script n:syntax="double">
+
+
+document.addEventListener("DOMContentLoaded", function(event) {
+$(document).ready(function(){
+// VALIDACION
+{{$name|noescape}}ValidationObject = $({{('#'.$name)}}).parsley();
+
+// VUE COMPONENT
+{{$name|noescape}}object = new Vue({
+el: '#{{$name|noescape}}table',
+data: {
+  total:0,
+  {{if $total??"" != ""}}
+  {{/if}}
+  headers : [
+          {{foreach $fields as $row}}
+          {{$row['label']}},
+           {{/foreach}}
+      ],
+  keys : [
+
+          {{foreach $fields as $row}}
+          {{$row['name']}},
+           {{/foreach}}
+      ],
+items: []
+},
+methods:
+{
+deleteItem: function (index) { 
+    this.items.splice(index, 1);
+},
+
+fireEdit: function(index){
+    $({{('#'.$name)}}).trigger('reset');
+      $({{('#'.$name)}}).attr('data-index',index);
+      this.keys.forEach(function(key){
+        if ($('#'+key).hasClass("select2-hidden-accessible"))
+        {
+         var newOption = new Option({{$name|noescape}}object.items[index][key].label, {{$name|noescape}}object.items[index][key].value, false, false);
+        $('#'+key).append(newOption).trigger('change');
+        }
+        else{
+                $('#'+key).val({{$name|noescape}}object.items[index][key].value);
+        }
+
+
+
+        $('#'+key).val({{$name|noescape}}object.items[index][key].value);
+      });
+      $('#{{$name|noescape}}modal').modal('show');
+      $({{('#'.$name)}}).find('.select2-hidden-accessible').trigger("change");
+
+}
+,
+ {{if $links??"" != ""}}
+fireLink: function(index,link,fl=1){
+  if(fl == 1){
+  window.open(link+'/'+this.items[index].{{$linksfield|noescape}}.value);
+  }
+  else
+  {
+  window.location.href=link+'/'+this.items[index].{{$linksfield|noescape}}.value;
+  }
+},
+{{/if}}
+fireNew: function(){
+    $({{('#'.$name)}}).removeAttr('data-index');
+    $({{('#'.$name)}}).trigger('reset');
+    $({{('#'.$name)}}).find('.select2-hidden-accessible').val(null).trigger("change");
+    $('#{{$name|noescape}}modal').modal('show');
+
+
+}
+,
+fireAdd: function(){
+    {{$name|noescape}}ValidationObject.validate();
+    if({{$name|noescape}}ValidationObject.isValid())
+    {
+      if( $({{('#'.$name)}}).attr('data-index'))
+      {
+        
+        dato = this.items.slice();
+        dato.splice($({{('#'.$name)}}).attr('dato-index'), 1);
+        //if(this.exists(dato,this.serialize()))
+        //{
+          //alert('Error', 'Registro repetido');
+          //alert('Error', 'Registro repetido');
+         // return false;
+        //}
+        //else
+       // {   
+            if(this.items[$({{('#'.$name)}}).attr('data-index')].hasOwnProperty('id'))
+            {
+              console.log(' si tiene id');
+              console.log(this.serialize());
+              dataobj = this.serialize();
+              dataobj.id=this.items[$({{('#'.$name)}}).attr('data-index')].id;
+              console.log(dataobj);
+                    this.items.splice($({{('#'.$name)}}).attr('data-index'), 1,dataobj);
+
+            }
+            else
+            {
+                          this.items.splice($({{('#'.$name)}}).attr('data-index'), 1,this.serialize());
+
+            }
+            $({{('#'.$name)}}).removeAttr('data-index');
+        // }
+      }
+      else
+      {
+        if(this.exists(this.items,this.serialize()))
+        {
+          alert('Error', 'Duplicated item');
+          return false;
+        }
+        else
+        {
+        this.items.push(this.serialize());
+
+        }
+      }
+    $({{('#'.$name.'modal')}}).modal('hide');
+    $({{('#'.$name)}}).trigger('reset');
+    $({{('#'.$name)}}).find('.select2-hidden-accessible').val(null).trigger("change");
+
+    }
+},
+ serialize1(object, keys) {
+  var x = keys.map(key => JSON.stringify(object[key])).join();
+  return x;
+},
+
+ exists(array, element, keys = []) {
+  if (!keys?.length) {
+    keys = Object.keys(element);
+  }
+  
+  return !!array.find(_element => this.serialize1(_element, keys) === this.serialize1(element, keys));
+}
+,
+serialize: function(){
+  var dataArray = $({{('#'.$name)}}).serializeArray(),
+    dataObj = {};
+
+$(dataArray).each(function(i, field){
+
+       if($("#"+field.name).is('select')){
+           inputType = 'select';
+             label = $("#"+field.name+" :selected").text().trim();
+
+       }else if($("#"+field.name).is('input:checkbox')){
+           inputType = 'checkbox';
+             label = field.value;
+       }
+       else {
+           inputType = 'text';
+             label = field.value;
+
+       }
+   
+  dataObj[field.name] = {"label": label ,"type" : inputType ,"value" :field.value};
+})
+return dataObj;
+
+
+}
+}
+});
+});
+});
+</script>

@@ -1,0 +1,24 @@
+{
+    "name": "josumx/imx-core",
+    "type": "project",
+    "require": {
+        "sofadesign/limonade": "dev-master",
+        "vlucas/phpdotenv": "dev-master",
+        "latte/latte": "dev-master",
+        "aws/aws-sdk-php": "dev-master",
+        "cocur/slugify": "dev-master",
+        "blueimp/jquery-file-upload": "dev-master",
+        "phpmailer/phpmailer": "dev-master",
+        "spipu/html2pdf": "dev-master",
+        "phpoffice/phpspreadsheet": "dev-master",
+        "mike42/escpos-php": "dev-master",
+      "ext-json": "*"
+    },
+    "authors": [
+        {
+            "name": "Josue",
+            "email": "josue@insist.com.mx"
+        }
+    ],
+    "minimum-stability": "dev"
+}

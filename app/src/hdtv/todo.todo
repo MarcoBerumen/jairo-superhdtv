@@ -1,0 +1,26 @@
+Vuelos
+
+Estado de solicitud.
+Autorizacion toño - javier. -> notificacion amb.
+Buzon de reservaciones. -> llenar pdf con claves, adjuntar 
+notificar al usuario  con los comprobantes 
+Buzon de historico.
+
+
+egresos
+tipos de egreso.
+
+
+combustible
+
+shift 4 , hace hacia atras.
+
+
+ -- TODOS LOS PROCESOS TENDRAN :
+        * Jefe inmediatado.
+        * Administradores0 del buzon 
+        * Super usuario
+        * Estatus y niveles de autorizacion.
+        * Roles de usuarios .
+        * usuarios notificados.
+        

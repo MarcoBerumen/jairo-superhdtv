@@ -1,0 +1,10 @@
+<script>
+    window.ParsleyValidator
+        .addValidator('minSelect', function(value, requirement) {
+            return value.split(',').length >= parseInt(requirement, 10);
+        }, 32)
+        .addMessage('en', 'minSelect', 'You must select at least %s.');
+</script>
+</body>
+
+</html>

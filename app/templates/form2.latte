@@ -1,0 +1,224 @@
+
+<form name="{$name}" id="{$name}" class="imx-form" data-parsley-validate="true"
+        {if ($file??[])}
+            enctype='multipart/form-data'
+        {/if}
+>
+    {if ($disabled??"")}
+    <fieldset disabled="disabled">
+        {/if}
+  <div class="form-group row m-b-15">
+                {foreach $fields as $field}
+                    {if ($field['type']??"") == "hidden"}
+                        <input type="hidden" id="{$field['name']}" name="{$field['name']}" class="form-control input-form m-b-5" value="{$field['value']??""}" {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                    {elseif ($field['type']??"") == "h1"}
+                        <div class="input-group col-12 panel" style="background:#1d2226;color:#ffff">
+                            <h5 class="panel-title">{$field['label']|noescape}</h5>
+                            <br>
+                        </div>
+                    {elseif ($field['name'] == "")}
+                    {else}
+                        <div class="input-group col-md-12 col-lg-{$field['cols']??$cols??6}">
+                            <label class="col-form-label col-3">{$field['label']|noescape}  {$field['id']}</label>
+                            <div class="col-9">
+                                {switch $field['type']??"text"}
+                                    {case select}
+                                    <select id="{$field['name']}" name="{$field['name']}" {$field['attrs']??""} class="form-control input-form"
+                                            {if ($field['required']??[])} data-parsley-required="true"{/if}
+                                    >
+                                        {if count($field['data']??[])}
+                                            {foreach $field['data'] as $data}
+                                                <option {if $data['value'] == $field['value']??""} selected="selected" {/if} value='{$data['value']}'>{$data['text']}</option>
+                                            {/foreach}
+                                        {/if}
+                                    </select>
+                                {case multiple}
+                                    <select multiple="multiple" id="{$field['name']}" name="{$field['name']}" {$field['attrs']??""} class="form-control input-form"
+                                            {if ($field['required']??[])} data-parsley-required="true"{/if}
+                                    >
+                                        {if count($field['data']??[])}
+                                            {foreach $field['data'] as $data}
+                                                <option  {if $data['selected']??false == true } selected="selected" {/if} value='{$data['value']}'>{$data['text']}</option>
+                                            {/foreach}
+                                        {/if}
+                                    </select>
+                                {case separator}
+                                    <hr>
+                                {case spacer}
+                                    &nbsp;
+                                {case button}
+                                    <input type="button" id="{$field['name']}"  class="btn btn-primary" value="{$field['button']}">
+                                {case textarea}
+                                    <textarea id="{$field['name']}" name="{$field['name']}" class="form-control input-form" rows="3" {if ($field['required']??[])} data-parsley-required="true"{/if} >{$field['value']??""}</textarea>
+                                {case info}
+                                    <textarea id="{$field['name']}" readonly="readonly"  name="{$field['name']}" class="form-control input-form  alert-info" style="user-select: none;font-size:10px;border:0px;resize: none" rows="5">{$field['value']??""}</textarea>
+                                {case email}
+                                    <input type="email" id="{$field['name']}" name="{$field['name']}" class="form-control input-form m-b-5"  value="{$field['value']??""}"   {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                {case password}
+                                    <input type="password" id="{$field['name']}" name="{$field['name']}" class="form-control input-form m-b-5"  value="{$field['value']??""}"  {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                {case date}
+                                    <input type="text" id="{$field['name']}" name="{$field['name']}" class="form-control input-form m-b-5 datepicker" readonly="readonly"  value="{$field['value']??""}"   {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                {case datetime}
+                                    <input type="text" id="{$field['name']}" name="{$field['name']}" class="form-control input-form m-b-5" readonly="readonly"  value="{$field['value']??""}"   {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                {case readonly}
+                                    <input type="text" id="{$field['name']}" name="{$field['name']}" class="form-control input-form m-b-5" readonly="readonly" value="{$field['value']??""}" {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                {case label}
+                                {$field['value']??""}
+                                {case numeric}
+                                    <input type="text" id="{$field['name']}" autocomplete="off" name="{$field['name']}" onclick="this.select()" min="-99999999999" max="99999999999" class="form-control input-form m-b-5 text-right {$field['class']??""}" {$field['attrs']??""|noescape}  value="{$field['value']??""}" {if ($field['required']??[])}  data-parsley-type="number" data-parsley-required="true"{/if}/>
+                                {case rnumeric}
+                                    <input type="text" id="{$field['name']}" autocomplete="off" readonly="readonly" name="{$field['name']}" onclick="this.select()" min="-99999999999" max="99999999999" class="form-control input-form m-b-5 text-right {$field['class']??""}" {$field['attrs']??""|noescape}  value="{$field['value']??""}" {if ($field['required']??[])}  data-parsley-type="number" data-parsley-required="true"{/if}/>
+                                {case file}
+                                    <input type="file" multiple id="{$field['name']}[]" name="{$field['name']}[]" class="form-control input-form m-b-5 {$field['class']??""}" value="" {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                    {foreach $field['files'] as $file}
+                                        {if $file}
+                                            <a href="/api/files/{$field['name']}/{$file}" title="Eliminar">
+                                                <i class='fa fa-trash'></i>
+                                            </a>
+                                        {/if}
+                                        &nbsp;
+                                        <a target="_blank" href='{$field['basepath']??"/files"}/{$file}'>
+                                            {$file}
+                                        </a>
+                                        &nbsp;
+                                    {/foreach}
+                                {case imgs3}
+                                    <input type="file" multiple accept="image/png, image/gif, image/jpeg"  id="{$field['name']}[]" name="{$field['name']}[]" class="form-control input-form m-b-5 {$field['class']??""}" value="" {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                    {foreach $field['files'] as $file}
+                                        {if $file}
+                                            <i class='fa fa-trash delete-link' data-href="{if $field['delete_link']??"" != ""}{$field['delete_link']}{$file}{else}/api/s3/{$file}/delete{/if}" title="Delete"></i>
+                                        {/if}
+                                        &nbsp;
+                                        <a data-lightbox="gallery" title="{$file}" href='/api/s3/{$file}'><img src='/api/s3/{$file}' style='width:50px;'></a> &nbsp;
+                                    {/foreach}
+                                {default}
+                                    <input type="text" id="{$field['name']}" name="{$field['name']}" {if ($field['regex']??[])} data-parsley-pattern="{$field['regex']}" {/if} class="form-control input-form m-b-5 {$field['class']??""}" value="{$field['value']??""}" {if ($field['required']??[])} data-parsley-required="true"{/if}/>
+                                {/switch}
+            {if $field['helper']??""}
+                                    <small class="f-s-12 text-grey-darker">
+                                        {$field['helper']}
+                                    </small>
+                                {/if}
+                            </div>
+                        </div>
+                    {/if}
+                {/foreach}
+  </div>
+  {if ($disabled??"")}
+    </fieldset>
+    {/if}
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+        //do work
+        $(document).ready(function(){
+            $("i.delete-link").click(function() {
+                var url = $(this).attr("data-href");
+                if(confirm('Are you sure to delete this file?')){
+                    window.open(url,'_blank');
+                }
+            })
+
+            {foreach $fields as $field}
+            {switch $field['type']??"text"}
+            {case "multiple"}
+            // es un select {$field['name']}
+            {if $field['value']??"" != ""}
+            {if $field['ajax']??"" != ""}
+            $.ajax({$field['ajax']."/?id=".$field['value']}).done(function(response){
+                try {
+                    response =JSON.parse(response)
+                } catch {
+                }
+                textval = response.results[0].text;
+                idval = response.results[0].id;
+                $({("#".$field['name'])}).append(new Option(textval, idval));
+            });
+            {else}
+            $({'#'.$field['name']}).val({$field['value']});
+            $({("#".$field['name'])}).trigger('change');
+            {/if}
+            {/if}
+
+            {if $field['ajax']??"" != ""}
+            // ajax
+            // select2 remoto
+            $({("#".$field['name'])}).select2({
+                ajax: {
+                    url:  {$field['ajax']} ,
+                    dataType: 'json'
+                }
+            });
+            {else}
+            $({("#".$field['name'])}).select2(); // select2 normal
+            {/if}
+
+            {case "select"}
+            // es un select {$field['name']}
+            {if $field['value']??"" != ""}
+            {if $field['ajax']??"" != ""}
+            $.ajax({$field['ajax']??""."/?id=".$field['value']}).done(function(response){
+                try {
+                    response =JSON.parse(response) }
+                catch {
+                }
+                textval = response.results[0].text;
+                idval = response.results[0].id;
+                $({('#' .$field['name'])}).append(new Option(textval, idval));
+            })
+            {else}
+            $({("#".$field['name'])}).val({$field['value']});
+            $({("#".$field['name'])}).trigger('change');
+            {/if}
+            {/if}
+
+            {if $field['ajax']??"" != ""}
+            // ajax
+            // select2 remoto
+            $({$id = ("#".$field['name'])}).select2({
+                ajax: {
+                    url:  {$field['ajax']} ,
+                    dataType: 'json'
+                }
+            });
+            {else}
+            $({$id = ("#".$field['name'])}).select2(); // select2 normal
+            {/if}
+
+            {case "date"}
+            // es un fecha {$field['name']}
+            flatpickr({("#".$field['name'])},{
+                dateFormat: {$field['format']??"d/m/Y"},
+                locale: {$field['locale']??"es"},
+                {if $field['min']??"" != ""}
+                minDate: {$field['min']},
+                {/if}
+                {if $field['max']??"" != ""}
+                maxDate: {$field['max']},
+                {/if}
+                {if $field['range']??false}
+                mode: "range"
+                {/if}
+            });
+
+            {case "datetime"}
+            // es un fecha {$field['name']}
+            flatpickr({("#".$field['name'])},{
+                dateFormat: {$field['format']??"d/m/Y H:i:s"},
+                enableTime: true,
+                locale: {$field['locale']??"es"},
+                {if $field['min']??"" != ""}
+                minDate: {$field['min']},
+                {/if}
+                {if $field['max']??"" != ""}
+                maxDate: {$field['max']}
+                {/if}
+            });
+            {default}
+            // es cualquier {$field['name']??"text"}  {$field['name']}
+            {/switch}
+            {/foreach}
+        });
+    });
+</script>

@@ -1,0 +1,293 @@
+<!--  Begin table  -->
+<table class="table" id="{$name|noescape}table">
+
+<thead>
+    <tr>
+        <th v-for="header in headers">
+        {{ header }}
+        </th>
+        <th>
+        </th>
+    </tr>
+
+</thead>
+<tbody>
+    <tr v-for="(item,index) in items">
+        <td>{{ item['items']?.label }}</td>
+        <td>{{ item['product_id']?.label }}</td>
+        <td>{{ item['status_id']?.label }}</td>
+        <td>{{ item['grade_id']?.label }}</td>
+        <td>{{ item['price']?.label }}</td>
+        <td>{{ item['subtotal']?.label }}</td>
+
+        <td class="text-right">
+        <button class="btn btn-primary"  v-on:click="deleteItem(index)"  ><i class="fa fa-trash"></i></button>
+        <button class="btn btn-primary" v-on:click="fireEdit(index)"><i class="fa fa-edit"></i></button>
+               {if $links??"" != ""}
+                       <button class="btn btn-primary" v-on:click="fireLink(index,'{$links}')"><i class="fa fa-eye"></i></button>
+                 {/if}
+                  {if $linksid??"" != ""}
+                       <button v-if="item['id']?.value > 0" class="btn btn-primary" v-on:click="fireLink(index,'{$linksid}',0)"><i class="fa fa-cog"></i></button>
+                 {/if}
+
+        <th>
+    </tr>
+
+</tbody>
+<tfoot>
+    <tr>
+        <th v-for="header in headers">
+        {{ header }}
+        </th>
+        <th>
+        </th>
+    </tr>
+
+</tfoot>
+</table>
+
+
+<button class="btn btn-primary" onclick="{$name|noescape}object.fireNew();" ><i class="fa fa-plus"></i></button>
+<!--  End table  -->
+<!--  Begin Modal -->
+<div class="modal fade" id="{$name}modal" tabindex="-1" role="dialog" aria-labelledby="{$name}modalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{$name}modalLabel"> {$addTitle}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {include '../../../templates/form.latte'}
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" onclick="formvalidation()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!--  End Modal -->
+
+
+
+{* {include 'table.latte', ["title" => $title, "rows" => $fields,"name"=> $name]} *}
+
+<script n:syntax="double">
+
+function formvalidation(){
+
+          var serials = [];
+
+            if($('#serial_number').val().split(",").length  != $('#items').val()  && $('#stock_type').val() == "Unique Serial") {
+                alert('The serial numbers specified does not match total items');
+                return false;
+            }
+
+
+  {{$name|noescape}}object.fireAdd();
+}
+
+document.addEventListener("DOMContentLoaded", function(event) {
+$(document).ready(function(){
+// VALIDACION
+x_itemsValidationObject = $('#x_items').parsley();
+
+// VUE COMPONENT
+x_itemsobject = new Vue({
+el: '#x_itemstable',
+data: {
+  total:0,
+  headers : [
+    "Total Items",
+    "Product",
+    "Status",
+    "Grade",
+    "Price per Item",
+    "Subtotal"
+      ],
+  keys : [
+          "items",
+          "product_id",
+          "stock_type",
+          "status_id",
+          "grade_id",
+          "price",
+          "sale_price",
+          "min_sale_price",
+          "subtotal",
+          "serial_number",
+          "notes",
+      ],
+items: []
+},
+methods:
+{
+deleteItem: function (index) { 
+    this.items.splice(index, 1);
+},
+
+fireEdit: function(index){
+  window.editing = true;
+    $('#x_items').trigger('reset');
+      $('#x_items').attr('data-index',index);
+      this.keys.forEach(function(key){
+        console.log(key);
+        if ($('#'+key).hasClass("select2-hidden-accessible"))
+        {
+         var newOption = new Option(x_itemsobject.items[index][key].label, x_itemsobject.items[index][key].value, false, false);
+        $('#'+key).append(newOption).trigger('change');
+        }
+        else{
+                $('#'+key).val(x_itemsobject.items[index][key].value);
+                console.log(x_itemsobject.items[index][key].value);
+        }
+
+
+
+        $('#'+key).val(x_itemsobject.items[index][key].value);
+      });
+      $('#shipping_price').val($('#shipping_item').val());
+      $('#x_itemsmodal').modal('show');
+      $('#x_items').find('.select2-hidden-accessible').trigger("change");
+      window.editing = false;
+      $('#serial_number').tagsinput('removeAll');
+      serials = this.items[index].serial_number.value.split(",");
+      serials.map(addTag);
+
+}
+,
+ {{if $links??"" != ""}}
+fireLink: function(index,link,fl=1){
+  if(fl == 1){
+  window.open(link+'/'+this.items[index].{{$linksfield|noescape}}.value);
+  }
+  else
+  {
+  window.location.href=link+'/'+this.items[index].{{$linksfield|noescape}}.value;
+  }
+},
+{{/if}}
+fireNew: function(){
+    $('#x_items').removeAttr('data-index');
+    $('#x_items').trigger('reset');
+    $('#x_items').find('.select2-hidden-accessible').val(null).trigger("change");
+          $('#shipping_price').val($('#shipping_item').val());
+
+    $('#x_itemsmodal').modal('show');
+  $('#serial_number').tagsinput('removeAll');
+
+}
+,
+fireAdd: function(){
+    x_itemsValidationObject.validate();
+    if(x_itemsValidationObject.isValid())
+    {
+      if( $('#x_items').attr('data-index'))
+      {
+        
+        dato = this.items.slice();
+        dato.splice($('#x_items').attr('dato-index'), 1);
+        //if(this.exists(dato,this.serialize()))
+        //{
+          //alert('Error', 'Registro repetido');
+          //alert('Error', 'Registro repetido');
+         // return false;
+        //}
+        //else
+       // {   
+            if(this.items[$('#x_items').attr('data-index')].hasOwnProperty('id'))
+            {
+              console.log(' si tiene id');
+              console.log(this.serialize());
+              dataobj = this.serialize();
+              dataobj.id=this.items[$('#x_items').attr('data-index')].id;
+              console.log(dataobj);
+                    this.items.splice($('#x_items').attr('data-index'), 1,dataobj);
+
+            }
+            else
+            {
+                          this.items.splice($('#x_items').attr('data-index'), 1,this.serialize());
+
+            }
+            $('#x_items').removeAttr('data-index');
+        // }
+      }
+      else
+      {
+        if(this.exists(this.items,this.serialize()))
+        {
+          alert('Error', 'Repeated record');
+          return false;
+        }
+        else
+        {
+        this.items.push(this.serialize());
+
+        }
+      }
+    $('#x_itemsmodal').modal('hide');
+    $('#x_items').trigger('reset');
+    $('#x_items').find('.select2-hidden-accessible').val(null).trigger("change");
+
+    }
+    this.totalinvoice();
+},
+ serialize1(object, keys) {
+  var x = keys.map(key => JSON.stringify(object[key])).join();
+  return x;
+},
+
+ exists(array, element, keys = []) {
+  if (!keys?.length) {
+    keys = Object.keys(element);
+  }
+  
+  return !!array.find(_element => this.serialize1(_element, keys) === this.serialize1(element, keys));
+} 
+,
+totalinvoice: function(){
+        var total =0;
+      this.items.forEach(function(key){
+        total =  total + parseFloat(key.subtotal.value);
+      });
+      // $('#taxes').val((total * window.stax)/100);
+      total = total + parseFloat($('#taxes').val());
+      console.log('Total invoice');
+      console.log(total);
+      $('#total_price').val(total);
+},
+serialize: function(){
+  var dataArray = $('#x_items').serializeArray(),
+    dataObj = {};
+
+$(dataArray).each(function(i, field){
+
+       if($("#"+field.name).is('select')){
+           inputType = 'select';
+             label = $("#"+field.name+" :selected").text().trim();
+
+       }else if($("#"+field.name).is('input:checkbox')){
+           inputType = 'checkbox';
+             label = field.value;
+       }
+       else {
+           inputType = 'text';
+             label = field.value;
+
+       }
+   
+  dataObj[field.name] = {"label": label ,"type" : inputType ,"value" :field.value};
+})
+return dataObj;
+
+}
+}
+});
+});
+});
+</script>

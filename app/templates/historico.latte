@@ -1,0 +1,104 @@
+<div class="row">
+    <!-- begin col-6 -->
+    <div class="col-12">
+        <!-- begin panel -->
+        <div class="panel panel-inverse" data-sortable-id="form-stuff-1">
+            <!-- begin panel-heading -->
+            <div class="panel-heading">
+                <h4 class="panel-title">{$title}</h4>
+                <div class="panel-heading-btn">
+                    <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default"
+                        data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                    <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success"
+                        data-click="panel-reload"><i class="fa fa-redo"></i></a>
+                    <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning"
+                        data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+                </div>
+            </div>
+            <!-- end panel-heading -->
+            <!-- begin panel-body -->
+            <div class="panel-body">
+                <form>
+                                    <div class="form-group row m-b-15">
+
+                     {foreach $fields as $field}
+            <div class="input-group col-4">
+                        <label class="col-form-label col-7">
+                        {if $field['estatus'] == 1}
+                                                <i class="fa fa-check-circle"></i>
+                         {elseif $field['estatus'] == 2}
+                                <i class="fa fa-ban"></i>
+                         {else}
+                                                <i class="fa fa-clock"></i>
+                                                {/if}
+  
+                        {$field['label']}
+                        <br>
+                        <small> {$field['usuario']}</small>
+
+                        </label>
+                        <div class="col-5">
+                        {if $field['archivo'] == 1}
+                        <a href="verarchivos/{$field['id']}">
+                        <i class="fa fa-folder"></i>
+                        </a> &nbsp;
+                        <a href="archivos/{$field['id']}">
+                        <i class="fa fa-upload"></i>
+                        </a>
+                        <br>
+                        {/if}
+                        {if $activo == "1"}
+                        {if $field['fecha'] == ""}
+                                                {if $field['archivo'] == "1"}
+                                                {if $field['files'] == "0"}
+                                                <span  class="btn btn-danger btn-sm" onclick="alert('Tienes que subir primero los archivos')" title="Omitir"><i class="fa fa-check"></i></span>
+                                                <span  class="btn btn-warning btn-sm" title="Omitir"  onclick="completaRequerimiento({$field['id']},2)" ><i class="fa fa-ban"></i></span>
+                                                {else}
+                                                <span  class="btn btn-success btn-sm" title="Completar"  onclick="completaRequerimiento({$field['id']},1)" ><i class="fa fa-check"></i></span>
+                                                <span  class="btn btn-warning btn-sm" title="Omitir"  onclick="completaRequerimiento({$field['id']},2)" ><i class="fa fa-ban"></i></span>
+
+                                                {/if}
+
+                                                {else}
+                                                <span  class="btn btn-warning btn-sm" title="Omitir"  onclick="completaRequerimiento({$field['id']},2)" ><i class="fa fa-ban"></i></span>
+                                                <span  class="btn btn-success btn-sm" title="Completar"  onclick="completaRequerimiento({$field['id']},1)" ><i class="fa fa-check"></i></span>
+
+                                                {/if}
+
+                        {else}
+                        <small>{$field['fecha']}</small>
+                        {/if}
+                        {/if}
+                        
+                        </div>
+                    </div>
+                    {/foreach}
+                    </div>
+                </form>
+            </div>
+            <!-- end panel-body -->
+<script>
+function completaRequerimiento(id,estatus){
+    if(confirm('Deseas completar este requerimiento? \n de click en aceptar para confirmar')){
+        window.location.href='completar/'+id+'?estatus='+estatus
+    }
+
+}
+function setupForm(){
+    {foreach $fields as $field}
+    
+    {if $field['ajax']??"" != ""}
+        $({$id = "#".$field['name']}).select2({
+            ajax: {
+                url:  {$field['ajax']} ,
+                dataType: 'json'
+                // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+            }
+        });
+    {elseif $field['type']??"" == "select"}
+        $({$id = "#".$field['name']}).select2();
+
+    {/if}
+    {/foreach}
+}
+</script>
